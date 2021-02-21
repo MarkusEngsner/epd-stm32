@@ -53,6 +53,9 @@
 #include "stm32f4xx_hal_gpio.h"
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * data
 **/
@@ -82,5 +85,11 @@
 void DEV_SPI_WriteByte(UBYTE value);
 
 int DEV_Module_Init(void);
+
 void DEV_Module_Exit(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

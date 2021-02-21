@@ -68,6 +68,10 @@
 #include "DEV_Config.h"
 #include "../Fonts/fonts.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Image attributes
 **/
@@ -204,6 +208,12 @@ void Paint_DrawBitMap(const unsigned char* image_buffer);
 //void Paint_DrawBitMap_OneQuarter(const unsigned char* image_buffer, UBYTE Region);
 //void Paint_DrawBitMap_OneEighth(const unsigned char* image_buffer, UBYTE Region);
 void Paint_DrawBitMap_Block(const unsigned char* image_buffer, UBYTE Region);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 

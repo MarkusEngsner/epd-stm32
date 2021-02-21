@@ -47,6 +47,7 @@ endif ()
 
 include_directories(${includes})
 include_directories(Core/User/Config Core/User/e-Paper Core/User/Examples Core/User/Fonts Core/User/GUI)
+include_directories(Core/Marker)
 
 add_definitions(${defines})
 
