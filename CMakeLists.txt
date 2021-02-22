@@ -48,6 +48,7 @@ endif ()
 
 include_directories(Core/Inc Drivers/STM32F4xx_HAL_Driver/Inc Drivers/STM32F4xx_HAL_Driver/Inc/Legacy Drivers/CMSIS/Device/ST/STM32F4xx/Include Drivers/CMSIS/Include)
 include_directories(Core/User/Config Core/User/e-Paper Core/User/Examples Core/User/Fonts Core/User/GUI)
+include_directories(Core/Marker)
 
 add_definitions(-DSTM32F410Rx -DUSE_HAL_DRIVER -DDEBUG)
 

@@ -26,6 +26,8 @@
 //#include "EPD_2in9_test.h"
 #include "EPD_2in9.h"
 
+#include "marker.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,41 +99,53 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
-   //EPD_2in9_test();
-   DEV_Module_Init();
-   EPD_2IN9_Init(EPD_2IN9_FULL);
+
+
+//   EPD_2in9_test();
+//   DEV_Module_Init();
+//   EPD_2IN9_Init(EPD_2IN9_FULL);
 //   EPD_2IN9_Clear();
-   HAL_Delay(500);
-    // it seems like each "pixel" requires 1 bit. therefore, the array only needs to be pixel_count / 8 big.
+//   HAL_Delay(500);
+//    // it seems like each "pixel" requires 1 bit. therefore, the array only needs to be pixel_count / 8 big.
     const UWORD width = EPD_2IN9_WIDTH;
     const UWORD height = EPD_2IN9_HEIGHT;
     const UWORD image_size = width * height / 8;
-   //UBYTE image_cache[image_size];
-   UBYTE *image_cache;
-   image_cache = (UBYTE *)malloc(image_size);
-   Paint_NewImage(image_cache, width, height, 270, BLACK);
-   Paint_SelectImage(image_cache);
-   Paint_Clear(BLACK);
-   Paint_DrawLine(20, 70, 70, 120, WHITE, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-   Paint_DrawString_EN(10, 0, "Hello, World!", &Font12, BLACK, WHITE);
-   Paint_DrawCircle(height / 2, width / 2, 30, WHITE, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-//   Paint_DrawBitMap(gImage_2in9);
-   EPD_2IN9_Display(image_cache);
+//   //UBYTE image_cache[image_size];
+//   UBYTE *image_cache;
+//   image_cache = (UBYTE *)malloc(image_size);
+//   Paint_NewImage(image_cache, width, height, 90, BLACK);
+//   Paint_SelectImage(image_cache);
+//   Paint_Clear(BLACK);
+//   Paint_DrawLine(20, 70, 70, 120, WHITE, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+//   Paint_DrawString_EN(10, 0, "Hello, World!", &Font12, BLACK, WHITE);
+//   Paint_DrawCircle(height / 2, width / 2, 30, WHITE, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+////   Paint_DrawBitMap(gImage_2in9);
+//   EPD_2IN9_Display(image_cache);
+//
+//   HAL_Delay(1000);
+//
+//   EPD_2IN9_Init(EPD_2IN9_PART);
+//   Paint_SelectImage(image_cache);
+//   int val = 12345;
+//   while(1){
+//       Paint_ClearWindows(10, 30, 10 + Font12.Width * 5, 30 + Font12.Height, BLACK);
+//       Paint_DrawNum(10, 30, val, &Font12, WHITE, BLACK);
+//       EPD_2IN9_Display(image_cache);
+//       val++;
+//       HAL_Delay(500);
+//
+//
+//   }
 
-   HAL_Delay(1000);
+  /* my implementation */
+  auto epaper = emarker::EPaperScreen(width, height, &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin,
+                                        DC_GPIO_Port, DC_Pin, RST_GPIO_Port, RST_Pin,
+                                        BUSY_GPIO_Port, BUSY_Pin);
+  epaper.InitializeDisplay();
+  epaper.ClearDisplay();
+//  EPD_2IN9_Clear();
 
-   EPD_2IN9_Init(EPD_2IN9_PART);
-   Paint_SelectImage(image_cache);
-   int val = 12345;
-   while(1){
-       Paint_ClearWindows(10, 30, 10 + Font12.Width * 5, 30 + Font12.Height, BLACK);
-       Paint_DrawNum(10, 30, val, &Font12, WHITE, BLACK);
-       EPD_2IN9_Display(image_cache);
-       val++;
-       HAL_Delay(500);
-
-
-   }
+  // epaper.sleep // TODO: implement as soon as possible to avoid frying display
 
    //Paint_DrawLine(20, 70, 70, 120, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
   /* USER CODE END 2 */
