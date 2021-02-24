@@ -10,15 +10,14 @@ namespace emarker {
 
 // TODO: turn into template
 // template class <width, height> or whatever
+template <unsigned int width_, unsigned int height_>
 class EPaperScreen {
  public:
-  EPaperScreen(unsigned int width, unsigned int height, SPI_HandleTypeDef *hspi,
+  EPaperScreen(SPI_HandleTypeDef *hspi,
                GPIO_TypeDef *cs_gpio, uint16_t cs_pin, GPIO_TypeDef *dc_gpio,
                uint16_t dc_pin, GPIO_TypeDef *rst_gpio, uint16_t rst_pin,
                GPIO_TypeDef *busy_gpio, uint16_t busy_pin)
-      : width_(width),
-        height_(height),
-        hspi_(hspi),
+      : hspi_(hspi),
         cs_gpio_(cs_gpio),
         cs_pin_(cs_pin),
         dc_gpio_(dc_gpio),
@@ -80,8 +79,6 @@ class EPaperScreen {
   enum class UpdateMode { Full, Partial };
   void ConfigureLUT(UpdateMode mode);
 
-  const unsigned int width_;
-  const unsigned int height_;
 
   SPI_HandleTypeDef *hspi_;
 

@@ -26,6 +26,7 @@
 //#include "EPD_2in9_test.h"
 #include "EPD_2in9.h"
 #include "marker.h"
+#include "marker-impl.cpp"
 
 /* USER CODE END Includes */
 
@@ -139,8 +140,8 @@ int main(void) {
   //   }
 
   /* my implementation */
-  auto epaper = emarker::EPaperScreen(
-      width, height, &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin, DC_GPIO_Port, DC_Pin,
+  auto epaper = emarker::EPaperScreen<width, height>(
+       &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin, DC_GPIO_Port, DC_Pin,
       RST_GPIO_Port, RST_Pin, BUSY_GPIO_Port, BUSY_Pin);
   epaper
       .InitializeDisplay();  // Currently quite buggy: suddenly stops refreshing
