@@ -13,10 +13,9 @@ namespace emarker {
 template <unsigned int width_, unsigned int height_>
 class EPaperScreen {
  public:
-  EPaperScreen(SPI_HandleTypeDef *hspi,
-               GPIO_TypeDef *cs_gpio, uint16_t cs_pin, GPIO_TypeDef *dc_gpio,
-               uint16_t dc_pin, GPIO_TypeDef *rst_gpio, uint16_t rst_pin,
-               GPIO_TypeDef *busy_gpio, uint16_t busy_pin)
+  EPaperScreen(SPI_HandleTypeDef *hspi, GPIO_TypeDef *cs_gpio, uint16_t cs_pin,
+               GPIO_TypeDef *dc_gpio, uint16_t dc_pin, GPIO_TypeDef *rst_gpio,
+               uint16_t rst_pin, GPIO_TypeDef *busy_gpio, uint16_t busy_pin)
       : hspi_(hspi),
         cs_gpio_(cs_gpio),
         cs_pin_(cs_pin),
@@ -40,7 +39,8 @@ class EPaperScreen {
  private:
   void HardReset();
 
-  void SetWindow(uint16_t x_start, uint16_t y_start, uint16_t x_end, uint16_t y_end);
+  void SetWindow(uint16_t x_start, uint16_t y_start, uint16_t x_end,
+                 uint16_t y_end);
 
   void SetCursor(uint16_t x, uint16_t y);
 
@@ -49,13 +49,12 @@ class EPaperScreen {
   void SendCommandHelper(Command cmd);
   void SendCommand(Command cmd);
   void SendCommand(Command cmd, uint8_t data);
-  template<size_t N>
+  template <size_t N>
   void SendCommand(Command cmd, std::array<uint8_t, N> data);
 
   void SendData(uint8_t datum);
 
-
-  template<size_t N>
+  template <size_t N>
   void SendData(std::array<uint8_t, N> data);
 
   void Select();
@@ -75,10 +74,8 @@ class EPaperScreen {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x13, 0x14, 0x44, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-
   enum class UpdateMode { Full, Partial };
   void ConfigureLUT(UpdateMode mode);
-
 
   SPI_HandleTypeDef *hspi_;
 

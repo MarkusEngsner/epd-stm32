@@ -132,10 +132,10 @@ void EPaperScreen<width_, height_>::ClearDisplay() {
 
 template <unsigned int width_, unsigned int height_>
 void EPaperScreen<width_, height_>::FillDisplay(uint8_t pattern) {
-  const auto width_in_bytes = width_ / 8;
+  constexpr auto width_in_bytes = width_ / 8;
   SetWindow(0, 0, width_, height_);
   SetCursor(0, 0);
-  std::array<uint8_t, 296 * 128 / 8> data{};
+  std::array<uint8_t, width_in_bytes * height_> data{};
   std::fill(data.begin(), data.end(), pattern);
   SendCommand(Command::WriteRAM);
   Select();
