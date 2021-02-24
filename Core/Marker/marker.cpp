@@ -167,7 +167,12 @@ void EPaperScreen::Deselect() {
   HAL_GPIO_WritePin(cs_gpio_, cs_pin_, GPIO_PIN_SET);
 }
 void EPaperScreen::Sleep() { SendCommand(Command::DeepSleepMode, 0x01); }
-void EPaperScreen::WakeUp() { SendCommand(Command::DeepSleepMode, 0x00); }
+void EPaperScreen::WakeUp() {
+// It seems that deep sleep is truly deep:
+  // The only way to wake it up is by performing a hard-reset
+// Looking at 3.1 Normal Operation Flow, this seems to be the case
+  HardReset();
+}
 void EPaperScreen::WaitUntilNotBusy() {
   while(HAL_GPIO_ReadPin(busy_gpio_, busy_pin_) == GPIO_PIN_SET){
     HAL_Delay(100);
