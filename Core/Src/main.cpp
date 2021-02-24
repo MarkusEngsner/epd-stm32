@@ -147,12 +147,16 @@ int main(void) {
                              // screen until using their init function
                              //  epaper.WakeUp();
                              //  EPD_2IN9_Clear();
-  epaper.ClearDisplay();
+//  epaper.ClearDisplay();
+  epaper.FillDisplay(0x00);
   //  epaper.Sleep();
 //  HAL_Delay(1000);
-  //  epaper.FillDisplay(0x00);
-  //  epaper.WakeUp();
-  epaper.ClearDisplay();
+  epaper.FillDisplay(0xF0);
+  epaper.Sleep();
+  HAL_Delay(2000);
+//  epaper.WakeUp();
+//  epaper.FillDisplay(0x88);
+//  epaper.ClearDisplay();
 
   // epaper.sleep // TODO: implement as soon as possible to avoid frying display
 

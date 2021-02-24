@@ -115,19 +115,13 @@ void EPaperScreen::ClearDisplay() {
 void EPaperScreen::FillDisplay(uint8_t pattern) {
   const auto width_in_bytes = width_ / 8;
   SetWindow(0, 0, width_, height_);
-  for (uint16_t row = 0; row < height_; row++) {
-    SetCursor(0, row);
-    SendCommand(Command::WriteRAM);
-    Select();
-    //       idea: try sending array of data at once (first for single row, then
-    //       entire screen)
-    //    SetTransmissionMode(TransmissionMode::Data);
-    //    HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes, 1000);
-    for (uint16_t column = 0; column < width_in_bytes; column++) {
-      SendData(pattern);
-    }
-    Deselect();
-  }
+  SetCursor(0, 0);
+  std::array<uint8_t, 296 * 128 / 8> data{};
+  std::fill(data.begin(), data.end(), pattern);
+  SendCommand(Command::WriteRAM);
+  Select();
+  HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes * height_, 1000);
+  Deselect();
 
   TurnOnDisplay();
 }
@@ -168,13 +162,13 @@ void EPaperScreen::Deselect() {
 }
 void EPaperScreen::Sleep() { SendCommand(Command::DeepSleepMode, 0x01); }
 void EPaperScreen::WakeUp() {
-// It seems that deep sleep is truly deep:
+  // It seems that deep sleep is truly deep:
   // The only way to wake it up is by performing a hard-reset
-// Looking at 3.1 Normal Operation Flow, this seems to be the case
+  // Looking at 3.1 Normal Operation Flow, this seems to be the case
   HardReset();
 }
 void EPaperScreen::WaitUntilNotBusy() {
-  while(HAL_GPIO_ReadPin(busy_gpio_, busy_pin_) == GPIO_PIN_SET){
+  while (HAL_GPIO_ReadPin(busy_gpio_, busy_pin_) == GPIO_PIN_SET) {
     HAL_Delay(100);
   }
 }
