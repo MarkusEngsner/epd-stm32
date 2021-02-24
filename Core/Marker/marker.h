@@ -31,6 +31,12 @@ class EPaperScreen {
   void InitializeDisplay();
 
   void ClearDisplay();
+  void FillDisplay(uint8_t pattern);
+
+  void Sleep();
+  void WakeUp();
+
+  void WaitUntilNotBusy();
 
  private:
   void HardReset();
@@ -49,7 +55,6 @@ class EPaperScreen {
 
   void SendData(uint8_t datum);
 
-  void Sleep();
 
   template<size_t N>
   void SendData(std::array<uint8_t, N> data);

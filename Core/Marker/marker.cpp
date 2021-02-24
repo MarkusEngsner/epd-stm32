@@ -88,26 +88,50 @@ void EPaperScreen::SendCommand(Command cmd, std::array<uint8_t, N> data) {
 void EPaperScreen::ClearDisplay() {
   const auto width_in_bytes = width_ / 8;
   SetWindow(0, 0, width_, height_);
-
+  //  std::array<uint8_t, 1 * 296 * 128 / 8> data{};
+  //  std::fill(data.begin(), data.end(), 0xFF);
+  //  SetCursor(0, 0);
+  //  SendCommand(Command::WriteRAM);
+  //  Select();
+  //  SetTransmissionMode(TransmissionMode::Data);
+  //  HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes * height_, 1000);
   for (uint16_t row = 0; row < height_; row++) {
     SetCursor(0, row);
     SendCommand(Command::WriteRAM);
     Select();
+    //       idea: try sending array of data at once (first for single row, then
+    //       entire screen)
+    //    SetTransmissionMode(TransmissionMode::Data);
+    //    HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes, 1000);
     for (uint16_t column = 0; column < width_in_bytes; column++) {
-      SendData(0x2A);
+      SendData(0xFF);
     }
     Deselect();
   }
 
   TurnOnDisplay();
-
-  // for every row (height):
-  // set cursor
-  // send WriteRAM command
-  // for every column (width / 8): send 0xFF
-
-  // turnondisplay
 }
+
+void EPaperScreen::FillDisplay(uint8_t pattern) {
+  const auto width_in_bytes = width_ / 8;
+  SetWindow(0, 0, width_, height_);
+  for (uint16_t row = 0; row < height_; row++) {
+    SetCursor(0, row);
+    SendCommand(Command::WriteRAM);
+    Select();
+    //       idea: try sending array of data at once (first for single row, then
+    //       entire screen)
+    //    SetTransmissionMode(TransmissionMode::Data);
+    //    HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes, 1000);
+    for (uint16_t column = 0; column < width_in_bytes; column++) {
+      SendData(pattern);
+    }
+    Deselect();
+  }
+
+  TurnOnDisplay();
+}
+
 void EPaperScreen::SetWindow(uint16_t x_start, uint16_t y_start, uint16_t x_end,
                              uint16_t y_end) {
   std::array x_data = {static_cast<uint8_t>((x_start >> 3) & 0xFF),
@@ -131,6 +155,10 @@ void EPaperScreen::TurnOnDisplay() {
   SendCommand(Command::NOP);
 
   // check until not busy anymore
+  // this seems to be very central to the display working at all
+  // should be implemented in a more elegant,
+  //  non-blocking way: perhaps through some action queue?
+  WaitUntilNotBusy();
 }
 void EPaperScreen::Select() {
   HAL_GPIO_WritePin(cs_gpio_, cs_pin_, GPIO_PIN_RESET);
@@ -138,8 +166,12 @@ void EPaperScreen::Select() {
 void EPaperScreen::Deselect() {
   HAL_GPIO_WritePin(cs_gpio_, cs_pin_, GPIO_PIN_SET);
 }
-void EPaperScreen::Sleep() {
-  SendCommand(Command::DeepSleepMode, 0x01);
+void EPaperScreen::Sleep() { SendCommand(Command::DeepSleepMode, 0x01); }
+void EPaperScreen::WakeUp() { SendCommand(Command::DeepSleepMode, 0x00); }
+void EPaperScreen::WaitUntilNotBusy() {
+  while(HAL_GPIO_ReadPin(busy_gpio_, busy_pin_) == GPIO_PIN_SET){
+    HAL_Delay(100);
+  }
 }
 
 }  // namespace emarker
