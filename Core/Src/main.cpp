@@ -107,7 +107,10 @@ int main(void) {
   //  EPD_2IN9_Clear();
   //    // it seems like each "pixel" requires 1 bit. therefore, the array only
   //    needs to be pixel_count / 8 big.
-  printf("Hello world\n");
+//  printf("Hello world\n");
+  uint8_t message[]  = "Hello world\r\n";
+  HAL_UART_Transmit(&huart2, message, 13, 1000);
+  HAL_UART_Transmit(&huart2, &message[6], 8, 1000);
   const UWORD width = EPD_2IN9_WIDTH;
   const UWORD height = EPD_2IN9_HEIGHT;
   const UWORD image_size = width * height / 8;
@@ -265,10 +268,10 @@ static void MX_USART2_UART_Init(void) {
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Parity = UART_PARITY_ODD;
   huart2.Init.Mode = UART_MODE_TX_RX;
   huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
