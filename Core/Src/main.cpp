@@ -25,8 +25,8 @@
 #include "EPD_Test.h"
 //#include "EPD_2in9_test.h"
 #include "EPD_2in9.h"
-#include "marker.h"
 #include "marker-impl.cpp"
+#include "marker.h"
 
 /* USER CODE END Includes */
 
@@ -41,6 +41,15 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#ifdef __GNUC__
+  /* With GCC, small printf (option LD Linker->Libraries->Small printf
+     set to 'Yes') calls __io_putchar() */
+  #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
+
+extern "C" PUTCHAR_PROTOTYPE;
 
 /* USER CODE END PM */
 
@@ -71,6 +80,8 @@ static void MX_SPI1_Init(void);
  * @brief  The application entry point.
  * @retval int
  */
+
+
 int main(void) {
   /* USER CODE BEGIN 1 */
 
@@ -99,21 +110,23 @@ int main(void) {
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
-  //   EPD_2in9_test();
-  //   DEV_Module_Init();
-  //   EPD_2IN9_Init(EPD_2IN9_FULL);
+//     EPD_2in9_test();
+//     DEV_Module_Init();
+
+//     EPD_2IN9_Init(EPD_2IN9_FULL);
   //   EPD_2IN9_Clear();
   //   HAL_Delay(500);
   //  EPD_2IN9_Clear();
   //    // it seems like each "pixel" requires 1 bit. therefore, the array only
   //    needs to be pixel_count / 8 big.
 //  printf("Hello world\n");
-  uint8_t message[]  = "Hello world\r\n";
-  HAL_UART_Transmit(&huart2, message, 13, 1000);
-  HAL_UART_Transmit(&huart2, &message[6], 8, 1000);
+  printf("In main of cppfromblinky!\r\n");
   const UWORD width = EPD_2IN9_WIDTH;
   const UWORD height = EPD_2IN9_HEIGHT;
+  printf("EPD display size: w=%d, h=%d\r\n", width, height);
   const UWORD image_size = width * height / 8;
+  printf("Total byte count of display: %d\r\n", image_size);
+  printf("That is: %.2fKB\r\n", image_size / 1024.0);
   //   //UBYTE image_cache[image_size];
   //   UBYTE *image_cache;
   //   image_cache = (UBYTE *)malloc(image_size);
@@ -144,23 +157,21 @@ int main(void) {
 
   /* my implementation */
   auto epaper = emarker::EPaperScreen<width, height>(
-       &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin, DC_GPIO_Port, DC_Pin,
-      RST_GPIO_Port, RST_Pin, BUSY_GPIO_Port, BUSY_Pin);
-  epaper
-      .InitializeDisplay();  // Currently quite buggy: suddenly stops refreshing
-                             // screen until using their init function
-                             //  epaper.WakeUp();
-                             //  EPD_2IN9_Clear();
-//  epaper.ClearDisplay();
-  epaper.FillDisplay(0x00);
+      &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin, DC_GPIO_Port, DC_Pin, RST_GPIO_Port,
+      RST_Pin, BUSY_GPIO_Port, BUSY_Pin);
+  epaper.InitializeDisplay();
+  //  epaper.WakeUp();
+//    EPD_2IN9_Clear();
+    epaper.ClearDisplay();
+//  epaper.FillDisplay(0x00);
   //  epaper.Sleep();
-//  HAL_Delay(1000);
+    HAL_Delay(1000);
   epaper.FillDisplay(0xF0);
   epaper.Sleep();
   HAL_Delay(2000);
-//  epaper.WakeUp();
-//  epaper.FillDisplay(0x88);
-//  epaper.ClearDisplay();
+  //  epaper.WakeUp();
+  //  epaper.FillDisplay(0x88);
+  //  epaper.ClearDisplay();
 
   // epaper.sleep // TODO: implement as soon as possible to avoid frying display
 
@@ -176,6 +187,20 @@ int main(void) {
     HAL_Delay(10000);
   }
   /* USER CODE END 3 */
+}
+
+/**
+  * @brief  Retargets the C library printf function to the USART.
+  * @param  None
+  * @retval None
+  */
+PUTCHAR_PROTOTYPE
+{
+  /* Place your implementation of fputc here */
+  /* e.g. write a character to the EVAL_COM1 and Loop until the end of transmission */
+  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+
+  return ch;
 }
 
 /**
