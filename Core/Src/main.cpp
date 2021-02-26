@@ -152,10 +152,6 @@ int main(void) {
       canvas.Set(10, y, paintbrush::Color::White);
       canvas.Set(30, y, paintbrush::Color::White);
     }
-    for (unsigned int x = 10; x < 30; x++){
-      canvas.Set(x, 20, paintbrush::Color::White);
-      canvas.Set(x, height - 20, paintbrush::Color::White);
-    }
     for (unsigned int x = 0; x < width; x++){
       canvas.Set(x, 20, paintbrush::Color::White);
       canvas.Set(x, height - 20, paintbrush::Color::White);

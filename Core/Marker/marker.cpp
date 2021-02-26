@@ -117,19 +117,7 @@ void EPaperScreen<width_, height_>::SendCommand(Command cmd,
 
 template <unsigned int width_, unsigned int height_>
 void EPaperScreen<width_, height_>::ClearDisplay() {
-  printf("Clearing display...\r\n");
-  const auto width_in_bytes = width_ / 8;
-  SetWindow(0, 0, width_, height_);
-  std::array<uint8_t, width_in_bytes> data{};
-  std::fill(data.begin(), data.end(), 0xFF);
-  for (uint16_t row = 0; row < height_; row++) {
-    SetCursor(0, row);
-    SendCommand(Command::WriteRAM);
-    SendData(data);
-  }
-
-  TurnOnDisplay();
-  printf("Clearing display done.\r\n");
+  FillDisplay(0xFF);
 }
 
 template <unsigned int width_, unsigned int height_>
@@ -138,23 +126,15 @@ void EPaperScreen<width_, height_>::FillDisplay(uint8_t pattern) {
   printf("FillDisplay with 0x%X\r\n", pattern);
   //  constexpr auto width_in_bytes = (width_ % 8 == 0) ? width_ / 8 : width_ /
   //  8 + 1;
-  SetWindow(0, 0, width_, height_);
+  SetWindow(0, 0, width_ - 8, height_ - 1);
   SetCursor(0, 0);
-  std::array<uint8_t, (width_in_bytes + 0) * height_> data{};
+  std::array<uint8_t, width_in_bytes * height_> data{};
   std::fill(data.begin(), data.end(), pattern);
-  for (uint16_t row = 0; row < height_; row++) {
-    // It seems like the size of the RAM doens't always match the size of the
-    // display. Therefore, the cursor has to be reset for every new row that is
-    // written When printing more advanced pictures, it will be possible to
-    //  determine with higher precision the RAM size compared to
-    //  the display size.
-    SetCursor(0, row);
-    SendCommand(Command::WriteRAM);
-    SetTransmissionMode(TransmissionMode::Data);
-    Select();
-    HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes, 1000);
-    Deselect();
-  }
+  SetCursor(0, 0);
+  SendCommand(Command::WriteRAM);
+  Select();
+  HAL_SPI_Transmit(hspi_, data.data(), data.size(), 1000);
+  Deselect();
   TurnOnDisplay();
   printf("FillDisplay() done.\r\n");
 }
@@ -163,21 +143,16 @@ template <unsigned int width_, unsigned int height_>
 void EPaperScreen<width_, height_>::PrintFull(
     paintbrush::Canvas<width_, height_> canvas) {
   // Perhaps just send in array of bytes to keep interfaces decoupled
-  // Sending in blocks along the other axis instead (with proper config),
-  // should allow sending 296 bytes at a time instead of just 16,
-  // which would shorten transmission time probably by at least 20%
   constexpr auto width_in_bytes = width_ >> 3;
-  SetWindow(0, 0, width_, height_);
-  auto raw = canvas.RawData();
-  for (unsigned int row = 0; row < height_; row++) {
-    const auto address = row * width_in_bytes;
-    SetCursor(0, row);
-    SendCommand(Command::WriteRAM);
-    SetTransmissionMode(TransmissionMode::Data);
-    Select();
-    HAL_SPI_Transmit(hspi_, &raw[address], width_in_bytes, 1000);
-    Deselect();
-  }
+  // Due to indices starting at 0, x_end and y_end have to be reduced by 1 byte
+  SetWindow(0, 0, width_ - 8, height_ - 1);
+  SetCursor(0, 0);
+  // TODO: turn into a single function call instead (perhaps send command with
+  // byte buffer?)
+  SendCommand(Command::WriteRAM);
+  Select();
+  HAL_SPI_Transmit(hspi_, canvas.RawData(), width_in_bytes * height_, 1000);
+  Deselect();
 
   TurnOnDisplay();
   printf("PrintFull() done.\r\n");
@@ -210,7 +185,7 @@ void EPaperScreen<width_, height_>::TurnOnDisplay() {
   SendCommand(Command::NOP);
 
   // check until not busy anymore
-  // this seems to be very central to the display working at all
+  // this can take up to 1.5s for a full refresh, so it is very important!
   // should be implemented in a more elegant,
   //  non-blocking way: perhaps through some action queue?
   WaitUntilNotBusy();
