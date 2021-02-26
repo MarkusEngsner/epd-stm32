@@ -3,13 +3,13 @@
 
 #include <array>
 
+#include "canvas.h"
 #include "commands.h"
 #include "stm32f4xx_hal.h"
 
 namespace emarker {
 
-// TODO: turn into template
-// template class <width, height> or whatever
+
 template <unsigned int width_, unsigned int height_>
 class EPaperScreen {
  public:
@@ -30,6 +30,8 @@ class EPaperScreen {
 
   void ClearDisplay();
   void FillDisplay(uint8_t pattern);
+
+  void PrintFull(paintbrush::Canvas<width_, height_> canvas);
 
   void Sleep();
   void WakeUp();

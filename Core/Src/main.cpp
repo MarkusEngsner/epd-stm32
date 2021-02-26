@@ -42,11 +42,11 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 #ifdef __GNUC__
-  /* With GCC, small printf (option LD Linker->Libraries->Small printf
-     set to 'Yes') calls __io_putchar() */
-  #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+/* With GCC, small printf (option LD Linker->Libraries->Small printf
+   set to 'Yes') calls __io_putchar() */
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
-  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
 
 extern "C" PUTCHAR_PROTOTYPE;
@@ -81,7 +81,6 @@ static void MX_SPI1_Init(void);
  * @retval int
  */
 
-
 int main(void) {
   /* USER CODE BEGIN 1 */
 
@@ -110,72 +109,76 @@ int main(void) {
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
-//     EPD_2in9_test();
-//     DEV_Module_Init();
+  const bool use_my_init = true;
+  const bool use_my_clears = true;
 
-//     EPD_2IN9_Init(EPD_2IN9_FULL);
-  //   EPD_2IN9_Clear();
-  //   HAL_Delay(500);
-  //  EPD_2IN9_Clear();
-  //    // it seems like each "pixel" requires 1 bit. therefore, the array only
-  //    needs to be pixel_count / 8 big.
-//  printf("Hello world\n");
-  printf("In main of cppfromblinky!\r\n");
+  //     EPD_2in9_test();
+  printf("\r\n\r\nIn main of cppfromblinky!\r\n");
   const UWORD width = EPD_2IN9_WIDTH;
   const UWORD height = EPD_2IN9_HEIGHT;
   printf("EPD display size: w=%d, h=%d\r\n", width, height);
   const UWORD image_size = width * height / 8;
   printf("Total byte count of display: %d\r\n", image_size);
   printf("That is: %.2fKB\r\n", image_size / 1024.0);
-  //   //UBYTE image_cache[image_size];
-  //   UBYTE *image_cache;
-  //   image_cache = (UBYTE *)malloc(image_size);
-  //   Paint_NewImage(image_cache, width, height, 90, BLACK);
-  //   Paint_SelectImage(image_cache);
-  //   Paint_Clear(BLACK);
-  //   Paint_DrawLine(20, 70, 70, 120, WHITE, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-  //   Paint_DrawString_EN(10, 0, "Hello, World!", &Font12, BLACK, WHITE);
-  //   Paint_DrawCircle(height / 2, width / 2, 30, WHITE, DOT_PIXEL_1X1,
-  //   DRAW_FILL_EMPTY);
-  ////   Paint_DrawBitMap(gImage_2in9);
-  //   EPD_2IN9_Display(image_cache);
-  //
-  //   HAL_Delay(1000);
-  //
-  //   EPD_2IN9_Init(EPD_2IN9_PART);
-  //   Paint_SelectImage(image_cache);
-  //   int val = 12345;
-  //   while(1){
-  //       Paint_ClearWindows(10, 30, 10 + Font12.Width * 5, 30 + Font12.Height,
-  //       BLACK); Paint_DrawNum(10, 30, val, &Font12, WHITE, BLACK);
-  //       EPD_2IN9_Display(image_cache);
-  //       val++;
-  //       HAL_Delay(500);
-  //
-  //
-  //   }
 
   /* my implementation */
   auto epaper = emarker::EPaperScreen<width, height>(
       &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin, DC_GPIO_Port, DC_Pin, RST_GPIO_Port,
       RST_Pin, BUSY_GPIO_Port, BUSY_Pin);
-  epaper.InitializeDisplay();
-  //  epaper.WakeUp();
-//    EPD_2IN9_Clear();
+
+  if (use_my_init) {
+    printf("Using my inits...\r\n");
+    epaper.InitializeDisplay();
+  } else {
+    printf("Using waveshare's inits...\r\n");
+    DEV_Module_Init();
+    EPD_2IN9_Init(EPD_2IN9_FULL);
+  }
+  HAL_Delay(500);
+
+  if (use_my_clears) {
+    printf("Using my clears... \r\n");
     epaper.ClearDisplay();
-//  epaper.FillDisplay(0x00);
-  //  epaper.Sleep();
     HAL_Delay(1000);
-  epaper.FillDisplay(0xF0);
-  epaper.Sleep();
-  HAL_Delay(2000);
+//    epaper.FillDisplay(0xF0);
+//    HAL_Delay(1000);
+
+//    epaper.FillDisplay(0b10101010);
+//    HAL_Delay(1000);
+    printf("Creating canvas...\r\n");
+    auto canvas = paintbrush::Canvas<width, height>();
+    canvas.Fill(paintbrush::Color::Black);
+    for (unsigned int y = 20; y < height - 20; y++){
+      canvas.Set(10, y, paintbrush::Color::White);
+      canvas.Set(30, y, paintbrush::Color::White);
+    }
+    for (unsigned int x = 10; x < 30; x++){
+      canvas.Set(x, 20, paintbrush::Color::White);
+      canvas.Set(x, height - 20, paintbrush::Color::White);
+    }
+    for (unsigned int x = 0; x < width; x++){
+      canvas.Set(x, 20, paintbrush::Color::White);
+      canvas.Set(x, height - 20, paintbrush::Color::White);
+    }
+//    for (unsigned x = 0; x < 10; x++){
+//      canvas.Set((x * 8) + 0, 50, paintbrush::Color::White);
+//    }
+
+    printf("Printing canvas...\r\n");
+    epaper.PrintFull(canvas);
+
+  } else {
+    printf("Using Waveshare's clear...\r\n");
+    EPD_2IN9_Clear();
+    HAL_Delay(2000);
+  }
+
   //  epaper.WakeUp();
-  //  epaper.FillDisplay(0x88);
+  epaper.Sleep();
+  printf("The screen is now asleep.\r\n");
+  //  epaper.WakeUp();
   //  epaper.ClearDisplay();
 
-  // epaper.sleep // TODO: implement as soon as possible to avoid frying display
-
-  // Paint_DrawLine(20, 70, 70, 120, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -190,14 +193,14 @@ int main(void) {
 }
 
 /**
-  * @brief  Retargets the C library printf function to the USART.
-  * @param  None
-  * @retval None
-  */
-PUTCHAR_PROTOTYPE
-{
+ * @brief  Retargets the C library printf function to the USART.
+ * @param  None
+ * @retval None
+ */
+PUTCHAR_PROTOTYPE {
   /* Place your implementation of fputc here */
-  /* e.g. write a character to the EVAL_COM1 and Loop until the end of transmission */
+  /* e.g. write a character to the EVAL_COM1 and Loop until the end of
+   * transmission */
   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
 
   return ch;

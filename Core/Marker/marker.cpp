@@ -7,7 +7,8 @@
 namespace emarker {
 
 template <unsigned int width_, unsigned int height_>
-void EPaperScreen<width_ , height_>::HardReset() {
+void EPaperScreen<width_, height_>::HardReset() {
+  printf("Performing e-ink hard reset...\r\n");
   HAL_GPIO_WritePin(rst_gpio_, rst_pin_, GPIO_PIN_SET);
   HAL_Delay(200);
   HAL_GPIO_WritePin(rst_gpio_, rst_pin_, GPIO_PIN_RESET);
@@ -26,20 +27,25 @@ void EPaperScreen<width_, height_>::SendCommand(Command cmd) {
 }
 
 template <unsigned int width_, unsigned int height_>
-void EPaperScreen<width_, height_>::SetTransmissionMode(EPaperScreen::TransmissionMode mode) {
+void EPaperScreen<width_, height_>::SetTransmissionMode(
+    EPaperScreen::TransmissionMode mode) {
   auto newPinState =
       (mode == TransmissionMode::Data) ? GPIO_PIN_SET : GPIO_PIN_RESET;
   HAL_GPIO_WritePin(dc_gpio_, dc_pin_, newPinState);
 }
 
 template <unsigned int width_, unsigned int height_>
-void EPaperScreen<width_, height_>::ConfigureLUT(EPaperScreen::UpdateMode mode) {
+void EPaperScreen<width_, height_>::ConfigureLUT(
+    EPaperScreen::UpdateMode mode) {
   // TODO: some kind of check to now if chipselect is needed
   // TODO: make table be reference, currently not possible due to
   // HAL_SPI_Transmit
   auto table = (mode == UpdateMode::Full) ? kLutFullUpdate : kLutPartialUpdate;
   SendCommand(Command::WriteLUT);
+  Select();
+  SetTransmissionMode(TransmissionMode::Data);
   HAL_SPI_Transmit(hspi_, table.data(), table.size(), 1000);
+  Deselect();
 }
 
 template <unsigned int width_, unsigned int height_>
@@ -59,6 +65,7 @@ void EPaperScreen<width_, height_>::SendCommandHelper(Command cmd) {
 
 template <unsigned int width_, unsigned int height_>
 void EPaperScreen<width_, height_>::InitializeDisplay() {
+  printf("Initializing display...\r\n");
   HAL_GPIO_WritePin(dc_gpio_, dc_pin_, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(cs_gpio_, cs_pin_, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(rst_gpio_, rst_pin_, GPIO_PIN_SET);
@@ -78,24 +85,30 @@ void EPaperScreen<width_, height_>::InitializeDisplay() {
   SendCommand(Command::BorderWaveform, 0x03);
   SendCommand(Command::DataEntryMode, 0x03);
   ConfigureLUT(UpdateMode::Full);
+  printf("Initialization done.\r\n");
 }
 
 template <unsigned int width_, unsigned int height_>
 void EPaperScreen<width_, height_>::SendData(uint8_t data) {
   SetTransmissionMode(TransmissionMode::Data);
+  Select();
   HAL_SPI_Transmit(hspi_, &data, 1, 1000);
+  Deselect();
 }
 
 template <unsigned int width_, unsigned int height_>
 template <size_t N>
 void EPaperScreen<width_, height_>::SendData(std::array<uint8_t, N> data) {
   SetTransmissionMode(TransmissionMode::Data);
+  Select();
   HAL_SPI_Transmit(hspi_, data.data(), data.size(), 1000);
+  Deselect();
 }
 
 template <unsigned int width_, unsigned int height_>
 template <size_t N>
-void EPaperScreen<width_, height_>::SendCommand(Command cmd, std::array<uint8_t, N> data) {
+void EPaperScreen<width_, height_>::SendCommand(Command cmd,
+                                                std::array<uint8_t, N> data) {
   Select();
   SendCommandHelper(cmd);
   SendData(data);
@@ -104,50 +117,76 @@ void EPaperScreen<width_, height_>::SendCommand(Command cmd, std::array<uint8_t,
 
 template <unsigned int width_, unsigned int height_>
 void EPaperScreen<width_, height_>::ClearDisplay() {
+  printf("Clearing display...\r\n");
   const auto width_in_bytes = width_ / 8;
   SetWindow(0, 0, width_, height_);
-  //  std::array<uint8_t, 1 * 296 * 128 / 8> data{};
-  //  std::fill(data.begin(), data.end(), 0xFF);
-  //  SetCursor(0, 0);
-  //  SendCommand(Command::WriteRAM);
-  //  Select();
-  //  SetTransmissionMode(TransmissionMode::Data);
-  //  HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes * height_, 1000);
+  std::array<uint8_t, width_in_bytes> data{};
+  std::fill(data.begin(), data.end(), 0xFF);
   for (uint16_t row = 0; row < height_; row++) {
     SetCursor(0, row);
     SendCommand(Command::WriteRAM);
-    Select();
-    //       idea: try sending array of data at once (first for single row, then
-    //       entire screen)
-    //    SetTransmissionMode(TransmissionMode::Data);
-    //    HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes, 1000);
-    for (uint16_t column = 0; column < width_in_bytes; column++) {
-      SendData(0xFF);
-    }
-    Deselect();
+    SendData(data);
   }
 
   TurnOnDisplay();
+  printf("Clearing display done.\r\n");
 }
 
 template <unsigned int width_, unsigned int height_>
 void EPaperScreen<width_, height_>::FillDisplay(uint8_t pattern) {
   constexpr auto width_in_bytes = width_ / 8;
+  printf("FillDisplay with 0x%X\r\n", pattern);
+  //  constexpr auto width_in_bytes = (width_ % 8 == 0) ? width_ / 8 : width_ /
+  //  8 + 1;
   SetWindow(0, 0, width_, height_);
   SetCursor(0, 0);
-  std::array<uint8_t, width_in_bytes * height_> data{};
+  std::array<uint8_t, (width_in_bytes + 0) * height_> data{};
   std::fill(data.begin(), data.end(), pattern);
-  SendCommand(Command::WriteRAM);
-  Select();
-  HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes * height_, 1000);
-  Deselect();
-
+  for (uint16_t row = 0; row < height_; row++) {
+    // It seems like the size of the RAM doens't always match the size of the
+    // display. Therefore, the cursor has to be reset for every new row that is
+    // written When printing more advanced pictures, it will be possible to
+    //  determine with higher precision the RAM size compared to
+    //  the display size.
+    SetCursor(0, row);
+    SendCommand(Command::WriteRAM);
+    SetTransmissionMode(TransmissionMode::Data);
+    Select();
+    HAL_SPI_Transmit(hspi_, data.data(), width_in_bytes, 1000);
+    Deselect();
+  }
   TurnOnDisplay();
+  printf("FillDisplay() done.\r\n");
 }
 
 template <unsigned int width_, unsigned int height_>
-void EPaperScreen<width_, height_>::SetWindow(uint16_t x_start, uint16_t y_start, uint16_t x_end,
-                             uint16_t y_end) {
+void EPaperScreen<width_, height_>::PrintFull(
+    paintbrush::Canvas<width_, height_> canvas) {
+  // Perhaps just send in array of bytes to keep interfaces decoupled
+  // Sending in blocks along the other axis instead (with proper config),
+  // should allow sending 296 bytes at a time instead of just 16,
+  // which would shorten transmission time probably by at least 20%
+  constexpr auto width_in_bytes = width_ >> 3;
+  SetWindow(0, 0, width_, height_);
+  auto raw = canvas.RawData();
+  for (unsigned int row = 0; row < height_; row++) {
+    const auto address = row * width_in_bytes;
+    SetCursor(0, row);
+    SendCommand(Command::WriteRAM);
+    SetTransmissionMode(TransmissionMode::Data);
+    Select();
+    HAL_SPI_Transmit(hspi_, &raw[address], width_in_bytes, 1000);
+    Deselect();
+  }
+
+  TurnOnDisplay();
+  printf("PrintFull() done.\r\n");
+}
+
+template <unsigned int width_, unsigned int height_>
+void EPaperScreen<width_, height_>::SetWindow(uint16_t x_start,
+                                              uint16_t y_start, uint16_t x_end,
+                                              uint16_t y_end) {
   std::array x_data = {static_cast<uint8_t>((x_start >> 3) & 0xFF),
                        static_cast<uint8_t>((x_end >> 3) & 0xFF)};
   SendCommand(Command::SetRAMPosX, x_data);
@@ -185,7 +224,9 @@ void EPaperScreen<width_, height_>::Deselect() {
   HAL_GPIO_WritePin(cs_gpio_, cs_pin_, GPIO_PIN_SET);
 }
 template <unsigned int width_, unsigned int height_>
-void EPaperScreen<width_, height_>::Sleep() { SendCommand(Command::DeepSleepMode, 0x01); }
+void EPaperScreen<width_, height_>::Sleep() {
+  SendCommand(Command::DeepSleepMode, 0x01);
+}
 template <unsigned int width_, unsigned int height_>
 void EPaperScreen<width_, height_>::WakeUp() {
   // It seems that deep sleep is truly deep:
@@ -199,6 +240,5 @@ void EPaperScreen<width_, height_>::WaitUntilNotBusy() {
     HAL_Delay(100);
   }
 }
-
 
 }  // namespace emarker

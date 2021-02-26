@@ -1,0 +1,26 @@
+
+Original example, STM32F103ZET6:
+
+e-Paper 	STM32F103ZET6   Functionality           STM32F410 (my config)
+Vcc 	    3.3V
+GND 	    GND
+DIN 	    PA7             SPI1_MOSI               PA7
+CLK 	    PA5             SP1_SCK                 PA5 (used to be green led)
+CS 	        PA3             Output (chip select)    PB6
+DC 	        PA2             Output                  PC7
+RST 	    PA1             Output                  PA9
+BUSY 	    PA3             Input                   PA8
+
+
+
+In order to make Waveshare libraries compile:
+1. Fix all capitalization issues in the includes in User/Examples (or was it /e-Paper? one of those two)
+2. Change all "stm32f1xx*.h" includes into stm32f4xx (or whatever your build target is)
+3. Make sure to label the pins so that they match /User/Config/DEV_Config.h
+4. Add All the User/ directories to include path in CMakeLists_template.txt:
+     include_directories(Core/User/Config Core/User/e-Paper Core/User/Examples Core/User/Fonts Core/User/GUI)
+    you don't need to put them into Core/, might be better to leave them in main folder
+    by adding it to the template file, it gets put into CMakeLists.txt after every code generation
+
+5. In order to get rid of implicit printf warnings:
+    add "include <stdio.h>" to Config/Debug.h and Examples/EPD_Test.h (might be enough to do it in Debug.h)
