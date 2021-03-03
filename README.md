@@ -23,8 +23,10 @@ and is performed a lot more often.
 - [ ] Support partial screen updates
   - [ ] Only transmitting needed data
 - [ ] Proper interface for drawing things on screen
-    - [ ] Straight lines
-    - [ ] Not-straight lines
-    - [ ] Circles
+  - [ ] Straight lines
+  - [ ] Not-straight lines
+  - [ ] Circles
+  - [ ] Text
+  - [ ] Graphs & Diagrams
 - [ ] API to send data from a PC
 - [ ] Non-blocking SPI communication with the EPD
