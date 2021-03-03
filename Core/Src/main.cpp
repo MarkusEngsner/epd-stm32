@@ -20,6 +20,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+#include <cstring>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "EPD_Test.h"
@@ -114,9 +116,11 @@ int main(void) {
 
   const bool use_my_init = true;
   const bool use_my_clears = true;
+  const bool skip_clears = true;
 
   //     EPD_2in9_test();
   printf("\r\n\r\nIn main of cppfromblinky!\r\n");
+
   const UWORD width = EPD_2IN9_WIDTH;
   const UWORD height = EPD_2IN9_HEIGHT;
   printf("EPD display size: w=%d, h=%d\r\n", width, height);
@@ -139,45 +143,70 @@ int main(void) {
   }
   HAL_Delay(500);
 
-  if (use_my_clears) {
-    printf("Using my clears... \r\n");
-    epaper.ClearDisplay();
-    HAL_Delay(1000);
-    epaper.FillDisplay(0xF0);
-    HAL_Delay(1000);
+  if (!skip_clears){
+    if (use_my_clears ) {
+      printf("Using my clears... \r\n");
+      epaper.ClearDisplay();
+      HAL_Delay(1000);
+      epaper.FillDisplay(0xF0);
+      HAL_Delay(1000);
 
 //    epaper.FillDisplay(0b10101010);
 //    HAL_Delay(1000);
-    printf("Creating canvas...\r\n");
-    auto canvas = paintbrush::Canvas<width, height>();
-    canvas.Fill(paintbrush::Color::Black);
-    for (unsigned int y = 20; y < height - 20; y++){
-      canvas.Set(10, y, paintbrush::Color::White);
-      canvas.Set(30, y, paintbrush::Color::White);
-    }
-    for (unsigned int x = 0; x < width; x++){
-      canvas.Set(x, 20, paintbrush::Color::White);
-      canvas.Set(x, height - 20, paintbrush::Color::White);
-    }
+      printf("Creating canvas...\r\n");
+      auto canvas = paintbrush::Canvas<width, height>();
+      canvas.Fill(paintbrush::Color::Black);
+      for (unsigned int y = 20; y < height - 20; y++){
+        canvas.Set(10, y, paintbrush::Color::White);
+        canvas.Set(30, y, paintbrush::Color::White);
+      }
+      for (unsigned int x = 0; x < width; x++){
+        canvas.Set(x, 20, paintbrush::Color::White);
+        canvas.Set(x, height - 20, paintbrush::Color::White);
+      }
 //    for (unsigned x = 0; x < 10; x++){
 //      canvas.Set((x * 8) + 0, 50, paintbrush::Color::White);
 //    }
 //    paintbrush::DrawStraightLine(canvas, 20, 30, 50, paintbrush::Axis::Horizontal, paintbrush::Color::White);
 
-    printf("Printing canvas...\r\n");
-    epaper.PrintFull(canvas);
+      printf("Printing canvas...\r\n");
+      epaper.PrintFull(canvas);
 
-  } else {
-    printf("Using Waveshare's clear...\r\n");
-    EPD_2IN9_Clear();
-    HAL_Delay(2000);
-    EPD_2IN9_Clear();
-    HAL_Delay(2000);
+    } else {
+      printf("Using Waveshare's clear...\r\n");
+      EPD_2IN9_Clear();
+      HAL_Delay(2000);
+      EPD_2IN9_Clear();
+      HAL_Delay(2000);
+    }
+
   }
 
   //  epaper.WakeUp();
   epaper.Sleep();
   printf("The screen is now asleep.\r\n");
+
+  printf("Please input a digit\r\n");
+
+  auto constexpr msg_size = 4;
+  uint8_t buffer[msg_size] = {};
+  uint32_t decoded_message = 0;
+  memset(buffer, 0, msg_size);
+
+
+  if ( HAL_UART_Receive(&huart2, buffer, msg_size, 10000) != HAL_OK){
+    printf("Failed to receive message\r\n");
+  } else {
+    printf("Received message.\r\n");
+    printf("%i \r\n", buffer[0]);
+    for (auto i = 0; i < msg_size; ++i){
+      auto c = buffer[i];
+      auto digit = c - '0';
+      decoded_message = decoded_message * 10 + digit;
+    }
+    printf("As a uint32_t::\r\n");
+    printf("%u \r\n", decoded_message);
+  }
   //  epaper.WakeUp();
   //  epaper.ClearDisplay();
 
