@@ -28,6 +28,9 @@
 #include "marker-impl.cpp"
 #include "marker.h"
 
+#include "drawing.h"
+#include "drawing-impl.cpp"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -140,8 +143,8 @@ int main(void) {
     printf("Using my clears... \r\n");
     epaper.ClearDisplay();
     HAL_Delay(1000);
-//    epaper.FillDisplay(0xF0);
-//    HAL_Delay(1000);
+    epaper.FillDisplay(0xF0);
+    HAL_Delay(1000);
 
 //    epaper.FillDisplay(0b10101010);
 //    HAL_Delay(1000);
@@ -159,12 +162,15 @@ int main(void) {
 //    for (unsigned x = 0; x < 10; x++){
 //      canvas.Set((x * 8) + 0, 50, paintbrush::Color::White);
 //    }
+//    paintbrush::DrawStraightLine(canvas, 20, 30, 50, paintbrush::Axis::Horizontal, paintbrush::Color::White);
 
     printf("Printing canvas...\r\n");
     epaper.PrintFull(canvas);
 
   } else {
     printf("Using Waveshare's clear...\r\n");
+    EPD_2IN9_Clear();
+    HAL_Delay(2000);
     EPD_2IN9_Clear();
     HAL_Delay(2000);
   }
