@@ -1,7 +1,3 @@
-//
-// Created by markus on 2021-02-21.
-//
-
 #include "marker.h"
 
 namespace emarker {
@@ -127,12 +123,12 @@ void EPaperScreen<width_, height_>::FillDisplay(uint8_t pattern) {
   //  constexpr auto width_in_bytes = (width_ % 8 == 0) ? width_ / 8 : width_ /
   //  8 + 1;
   SetWindow(0, 0, width_ - 8, height_ - 1);
-  SetCursor(0, 0);
   std::array<uint8_t, width_in_bytes * height_> data{};
   std::fill(data.begin(), data.end(), pattern);
   SetCursor(0, 0);
   SendCommand(Command::WriteRAM);
   Select();
+  SetTransmissionMode(TransmissionMode::Data);
   HAL_SPI_Transmit(hspi_, data.data(), data.size(), 1000);
   Deselect();
   TurnOnDisplay();
@@ -151,6 +147,7 @@ void EPaperScreen<width_, height_>::PrintFull(
   // byte buffer?)
   SendCommand(Command::WriteRAM);
   Select();
+  SetTransmissionMode(TransmissionMode::Data);
   HAL_SPI_Transmit(hspi_, canvas.RawData(), width_in_bytes * height_, 1000);
   Deselect();
 
