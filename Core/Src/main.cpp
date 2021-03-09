@@ -27,11 +27,10 @@
 #include "EPD_Test.h"
 //#include "EPD_2in9_test.h"
 #include "EPD_2in9.h"
+#include "drawing-impl.cpp"
+#include "drawing.h"
 #include "marker-impl.cpp"
 #include "marker.h"
-
-#include "drawing.h"
-#include "drawing-impl.cpp"
 
 /* USER CODE END Includes */
 
@@ -116,7 +115,7 @@ int main(void) {
 
   const bool use_my_init = true;
   const bool use_my_clears = true;
-  const bool skip_clears = true;
+  const bool skip_clears = false;
 
   //     EPD_2in9_test();
   printf("\r\n\r\nIn main of cppfromblinky!\r\n");
@@ -143,31 +142,71 @@ int main(void) {
   }
   HAL_Delay(500);
 
-  if (!skip_clears){
-    if (use_my_clears ) {
+  if (!skip_clears) {
+    if (use_my_clears) {
       printf("Using my clears... \r\n");
       epaper.ClearDisplay();
       HAL_Delay(1000);
-      epaper.FillDisplay(0xF0);
-      HAL_Delay(1000);
+      //      epaper.FillDisplay(0xF0);
+      //      HAL_Delay(1000);
 
-//    epaper.FillDisplay(0b10101010);
-//    HAL_Delay(1000);
+      //    epaper.FillDisplay(0b10101010);
+      //    HAL_Delay(1000);
       printf("Creating canvas...\r\n");
       auto canvas = paintbrush::Canvas<width, height>();
       canvas.Fill(paintbrush::Color::Black);
-      for (unsigned int y = 20; y < height - 20; y++){
-        canvas.Set(10, y, paintbrush::Color::White);
-        canvas.Set(30, y, paintbrush::Color::White);
-      }
-      for (unsigned int x = 0; x < width; x++){
-        canvas.Set(x, 20, paintbrush::Color::White);
-        canvas.Set(x, height - 20, paintbrush::Color::White);
-      }
-//    for (unsigned x = 0; x < 10; x++){
-//      canvas.Set((x * 8) + 0, 50, paintbrush::Color::White);
-//    }
-//    paintbrush::DrawStraightLine(canvas, 20, 30, 50, paintbrush::Axis::Horizontal, paintbrush::Color::White);
+      //      for (unsigned int y = 20; y < height - 20; y++){
+      //        canvas.Set(10, y, paintbrush::Color::White);
+      //        canvas.Set(30, y, paintbrush::Color::White);
+      //      }
+      //      for (unsigned int x = 0; x < width; x++){
+      //        canvas.Set(x, 20, paintbrush::Color::White);
+      //        canvas.Set(x, height - 20, paintbrush::Color::White);
+      //      }
+      //    for (unsigned x = 0; x < 10; x++){
+      //      canvas.Set((x * 8) + 0, 50, paintbrush::Color::White);
+      //    }
+      paintbrush::DrawStraightLine(canvas, 0, 0, 50,
+                                   paintbrush::Axis::Horizontal,
+                                   paintbrush::Color::White);
+      paintbrush::DrawStraightLine(canvas, 20, 30, 50,
+                                   paintbrush::Axis::Horizontal,
+                                   paintbrush::Color::White);
+      paintbrush::DrawStraightLine(canvas, 20, 50, 50,
+                                   paintbrush::Axis::Vertical,
+                                   paintbrush::Color::White);
+      paintbrush::DrawDiagonalLine(canvas, 20, 20, 50,
+                                   paintbrush::Direction::DownRight,
+                                   paintbrush::Color::White);
+      std::array<uint8_t, 72> two = {
+          0x00, 0x00, 0x00,  //
+          0x00, 0x00, 0x00,  //
+          0x07, 0xC0, 0x00,  //      #####
+          0x1F, 0xF0, 0x00,  //    #########
+          0x38, 0x30, 0x00,  //   ###     ##
+          0x30, 0x18, 0x00,  //   ##       ##
+          0x30, 0x18, 0x00,  //   ##       ##
+          0x00, 0x18, 0x00,  //            ##
+          0x00, 0x30, 0x00,  //           ##
+          0x00, 0x60, 0x00,  //          ##
+          0x01, 0xC0, 0x00,  //        ###
+          0x03, 0x80, 0x00,  //       ###
+          0x06, 0x00, 0x00,  //      ##
+          0x0C, 0x00, 0x00,  //     ##
+          0x18, 0x00, 0x00,  //    ##
+          0x3F, 0xF8, 0x00,  //   ###########
+          0x3F, 0xF8, 0x00,  //   ###########
+          0x00, 0x00, 0x00,  //
+          0x00, 0x00, 0x00,  //
+          0x00, 0x00, 0x00,  //
+          0x00, 0x00, 0x00,  //
+          0x00, 0x00, 0x00,  //
+          0x00, 0x00, 0x00,  //
+          0x00, 0x00, 0x00,  //
+      };
+      paintbrush::Canvas<24, 24> symbol{two};
+
+      paintbrush::DrawSymbol(canvas, 80, 80, symbol, paintbrush::Color::White);
 
       printf("Printing canvas...\r\n");
       epaper.PrintFull(canvas);
@@ -179,7 +218,6 @@ int main(void) {
       EPD_2IN9_Clear();
       HAL_Delay(2000);
     }
-
   }
 
   //  epaper.WakeUp();
@@ -193,13 +231,12 @@ int main(void) {
   uint32_t decoded_message = 0;
   memset(buffer, 0, msg_size);
 
-
-  if ( HAL_UART_Receive(&huart2, buffer, msg_size, 10000) != HAL_OK){
+  if (HAL_UART_Receive(&huart2, buffer, msg_size, 10000) != HAL_OK) {
     printf("Failed to receive message\r\n");
   } else {
     printf("Received message.\r\n");
     printf("%i \r\n", buffer[0]);
-    for (auto i = 0; i < msg_size; ++i){
+    for (auto i = 0; i < msg_size; ++i) {
       auto c = buffer[i];
       auto digit = c - '0';
       decoded_message = decoded_message * 10 + digit;

@@ -20,7 +20,9 @@ template <unsigned int width_, unsigned int height_>
 class Canvas {
  public:
   Canvas() : arr{} {}
-  inline bool operator()(unsigned x, unsigned y) const {
+  explicit Canvas(std::array<uint8_t, width_ * height_ / 8> source): arr(source){ }
+
+  Color operator()(unsigned x, unsigned y) const {
     return GetBit(x, y) ? Color::White : Color::Black;
   };
   uint8_t* RawData() { return arr.data(); };
@@ -49,9 +51,6 @@ class Canvas {
 
   void Set(unsigned int x, unsigned int y) {
     const auto i = FlatByteIndex(x, y);
-    if (i > 5000){
-      printf("ERROR! i=%u\tx=%u\ty=%u", i, x, y);
-    }
     const auto bit = InternalBitIndex(x, y);
     arr[i] |= 1 << bit;
   };
