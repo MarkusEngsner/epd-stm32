@@ -23,7 +23,7 @@ and is performed a lot more often.
 - [ ] Support partial screen updates
   - [ ] Only transmitting needed data
 - [ ] Proper interface for drawing things on screen
-  - [ ] Straight lines
+  - [x] Straight lines
   - [ ] Not-straight lines
   - [ ] Circles
   - [ ] Text
