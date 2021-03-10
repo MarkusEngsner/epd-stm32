@@ -24,13 +24,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "EPD_Test.h"
-//#include "EPD_2in9_test.h"
 #include "EPD_2in9.h"
 #include "drawing-impl.cpp"
 #include "drawing.h"
 #include "marker-impl.cpp"
 #include "marker.h"
+#include "font24.h"
 
 /* USER CODE END Includes */
 
@@ -206,7 +205,9 @@ int main(void) {
       };
       paintbrush::Canvas<24, 24> symbol{two};
 
-      paintbrush::DrawSymbol(canvas, 80, 80, symbol, paintbrush::Color::White);
+      for (int i = 0; i < 4; i++){
+        paintbrush::DrawSymbol(canvas, 24 * i, 80, paintbrush::font24(i + '0'), paintbrush::Color::White);
+      }
 
       printf("Printing canvas...\r\n");
       epaper.PrintFull(canvas);

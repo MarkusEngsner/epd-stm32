@@ -2,7 +2,6 @@
 #define CPPFROMBLINKY_DRAWING_H
 
 #include "canvas.h"
-#include "symbol.h"
 
 namespace paintbrush {
 

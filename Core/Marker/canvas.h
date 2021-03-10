@@ -20,7 +20,7 @@ template <unsigned int width_, unsigned int height_>
 class Canvas {
  public:
   Canvas() : arr{} {}
-  explicit Canvas(std::array<uint8_t, width_ * height_ / 8> source): arr(source){ }
+  constexpr explicit Canvas(std::array<uint8_t, width_ * height_ / 8> source): arr(source){ }
 
   Color operator()(unsigned x, unsigned y) const {
     return GetBit(x, y) ? Color::White : Color::Black;
